@@ -1,9 +1,10 @@
-import { MouseEvent } from "react";
+interface gameInfo {
+  cols: number;
+  rows: number;
+}
 
-export const analyzeBtnClicked = (event: MouseEvent<HTMLButtonElement>) => {
-  console.log(event);
-  const cols = parseInt(event.currentTarget&.getAttribute("data-cols"));
-  const rows = parseInt(event.currentTarget&.getAttribute("data-rows"));
+export const analyzeBtnClicked = (props: gameInfo) => {
+  const {cols, rows} = props;
   const analyzer = new Analyzer(cols, rows);
   console.log("ANLYZING2...", analyzer);
 };
