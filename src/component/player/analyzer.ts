@@ -5,18 +5,30 @@ import { Tile } from "./tile";
 interface gameInfo {
   cols: number;
   rows: number;
+  count: number;
 }
 
 export const analyzeBtnClicked = (props: gameInfo) => {
   const {cols, rows} = props;
+  const count = props.count || 0;
   const analyzer = new Analyzer(cols, rows);
-  console.log("ANLYZING2...", analyzer);
+  console.log("ANLYZING2...", analyzer, count);
   const bombs = analyzer.searchBombs();
-  console.log(bombs);
+  const countBombs = bombs.length;
+  console.log("bobms are ", bombs);
   analyzer.markFlags(bombs);
   const openableTiles = analyzer.openableTiles();
-  console.log(openableTiles);
-  analyzer.openOpenableTiles(openableTiles);
+  const countOpenable = openableTiles.length;
+  console.log("openables are", openableTiles);
+  if (countBombs + countOpenable > 0) {
+    analyzer.openOpenableTiles(openableTiles);
+    const newProps = {...props, count: count+1}
+    setTimeout(()=>analyzeBtnClicked(newProps), 1000);
+  } else {
+    const covered = analyzer.coveredTiles();
+    const target = [covered[Math.floor(Math.random() * covered.length)]];
+    if (count === 0) analyzer.openOpenableTiles(target);
+  }
 };
 
 
@@ -96,7 +108,7 @@ class Analyzer {
   }
 
   // 開いていないタイルのIndexを全て返す
-  private coveredTiles(): number[] {
+  public coveredTiles(): number[] {
     return this.tiles.map((tile, idx) => {
       if (tile == COVERED) {
         return idx;
