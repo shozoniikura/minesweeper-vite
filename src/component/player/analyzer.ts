@@ -40,9 +40,6 @@ class Analyzer {
     if (this.isAllCovered()) return [];
 
     const coveredTiles = this.coveredTiles();
-    // return coveredTiles.map(idx => {
-    //   if (this.tiles[idx] === COVERED && Math.random() * 10 > 5) return idx
-    // }).filter(idx => idx !== undefined);
     const isOpenedTiles = this.isOpenedTiles();
     return Array.from(new Set(isOpenedTiles.map((tileIdx) => {
       const tile = new Tile(tileIdx, this.tiles[tileIdx]);
@@ -70,10 +67,27 @@ class Analyzer {
   }
 
   public markFlags(indecies: number[]) {
+    if (indecies.length === 0) return
+
+    setTimeout(() => {
+      const elements = this.tileElements();
+      const idx: number = indecies.shift() || 0;
+      const element = elements[idx];
+      if (this.getValueAt(element) !== FLAG)
+        element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
+      this.markFlags(indecies);
+    }, 100);
+  }
+
+  public openOpenableTiles(indecies: number[]): void {
     const elements = this.tileElements();
-    indecies.forEach(idx => {
-      elements[idx].dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
-    });
+    if (indecies.length === 0) return
+
+    setTimeout(() => {
+      const idx: number = indecies.shift() || 0;
+      elements[idx].click();
+      this.openOpenableTiles(indecies);
+    }, 100);
   }
 
   // 一つも開いていない場合は true
@@ -107,6 +121,10 @@ class Analyzer {
     this.tiles = Array.from(imgs).map((node) => parseInt(node.getAttribute("data-tile") || '0'));
   }
 
+  public getValueAt(node: HTMLImageElement) {
+    return parseInt(node.getAttribute("data-tile") || '0');
+  }
+
   public at(x: number, y: number): number {
     if (x < 0 || y < 0 || this.cols <= x || this.rows <= y) {
       return NaN;
@@ -138,12 +156,5 @@ class Analyzer {
       }
     });
     return sortedUniqArray(ret);
-  }
-
-  public openOpenableTiles(indecies: number[]): void {
-    const elements = this.tileElements();
-    indecies.forEach(idx => {
-      elements[idx].click();
-    });
   }
 }
