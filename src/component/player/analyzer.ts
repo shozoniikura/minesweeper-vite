@@ -1,4 +1,5 @@
 import { COVERED, FLAG, FLAGGED, NOT_OPEN } from "../../lib/mskai/constants";
+import { Tile } from "./tile";
 
 interface gameInfo {
   cols: number;
@@ -32,12 +33,36 @@ class Analyzer {
 
   public searchBombs(): number[] {
     this.read();
-    if (this.allCovered()) return [];
+    if (this.isAllCovered()) return [];
 
     const coveredTiles = this.coveredTiles();
-    return coveredTiles.map(idx => {
-      if (this.tiles[idx] === COVERED && Math.random() * 10 > 5) return idx
-    }).filter(idx => idx !== undefined);
+    // return coveredTiles.map(idx => {
+    //   if (this.tiles[idx] === COVERED && Math.random() * 10 > 5) return idx
+    // }).filter(idx => idx !== undefined);
+    const isOpenedTiles = this.isOpenedTiles();
+    return Array.from(new Set(isOpenedTiles.map((tileIdx) => {
+      const tile = new Tile(tileIdx, this.tiles[tileIdx]);
+      return tile;
+    }).map(tile => {
+      const aroundTiles = tile.around(this.cols, this.rows);
+      let count = 0;
+      aroundTiles.forEach(position => {
+        if (this.tiles[position] >= COVERED) {
+          count++;
+        }
+      });
+      if (count === tile.value && count > 0) {
+        const ret: number[] = [];
+        aroundTiles.forEach(idx => {
+          if (coveredTiles.includes(idx)) {
+            ret.push(idx);
+          }
+        });
+        console.log(ret);
+        return ret;
+      }
+    }).filter(ary => ary !== undefined)
+    .flat().sort((first: number, second: number) => first - second)));
   }
 
   public markFlags(indecies: number[]) {
@@ -48,7 +73,7 @@ class Analyzer {
   }
 
   // 一つも開いていない場合は true
-  private allCovered(): boolean {
+  private isAllCovered(): boolean {
     return this.tiles.reduce((prev, current) => prev && (current == COVERED || current == FLAG), true);
   }
 
@@ -56,6 +81,14 @@ class Analyzer {
   private coveredTiles(): number[] {
     return this.tiles.map((tile, idx) => {
       if (tile == COVERED) {
+        return idx;
+      }
+    }).filter(idx => idx !== undefined);
+  }
+
+  private isOpenedTiles(): number[] {
+    return this.tiles.map((tile, idx) => {
+      if (tile < COVERED) {
         return idx;
       }
     }).filter(idx => idx !== undefined);
