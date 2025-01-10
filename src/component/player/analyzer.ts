@@ -1,4 +1,5 @@
 import { COVERED, FLAG, FLAGGED, NOT_OPEN } from "../../lib/mskai/constants";
+import { sortedUniqArray } from "./common";
 import { Tile } from "./tile";
 
 interface gameInfo {
@@ -13,6 +14,9 @@ export const analyzeBtnClicked = (props: gameInfo) => {
   const bombs = analyzer.searchBombs();
   console.log(bombs);
   analyzer.markFlags(bombs);
+  const openableTiles = analyzer.openableTiles();
+  console.log(openableTiles);
+  analyzer.openOpenableTiles(openableTiles);
 };
 
 
@@ -58,7 +62,7 @@ class Analyzer {
             ret.push(idx);
           }
         });
-        console.log(ret);
+        // console.log(ret);
         return ret;
       }
     }).filter(ary => ary !== undefined)
@@ -112,5 +116,34 @@ class Analyzer {
 
   public tileAt(x: number, y: number): number {
     return this.tiles[this.at(x, y)];
+  }
+
+  public openableTiles(): number[] {
+    const isOpenedTiles = this.isOpenedTiles();
+    const coveredTiles = this.coveredTiles();
+    const ret: number[] = [];
+    isOpenedTiles.forEach(idx => {
+      const tile = new Tile(idx, this.tiles[idx]);
+      let count = 0;
+      const aroundTiles = tile.around(this.cols, this.rows);
+      aroundTiles.forEach(aIdx => {
+        if (this.tiles[aIdx] === FLAG) {
+          count++;
+        }
+      });
+      if (count >= tile.value) {
+        aroundTiles
+          .filter(aIdx => this.tiles[aIdx] === COVERED)
+          .forEach(aIdx => ret.push(aIdx));
+      }
+    });
+    return sortedUniqArray(ret);
+  }
+
+  public openOpenableTiles(indecies: number[]): void {
+    const elements = this.tileElements();
+    indecies.forEach(idx => {
+      elements[idx].click();
+    });
   }
 }
