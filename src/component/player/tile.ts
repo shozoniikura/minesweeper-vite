@@ -27,7 +27,7 @@ export class Tile {
 
   public at(position: number, cols: number, rows: number): [number, number] {
     const x = position % cols;
-    const y = (position - x) / rows;
+    const y = (position - x) / cols;
     return [x, y];
   }
 }
