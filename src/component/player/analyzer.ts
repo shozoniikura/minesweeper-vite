@@ -1,66 +1,17 @@
-import { COVERED, FLAG, FLAGGED, NOT_OPEN, PLAY } from "../../lib/mskai/constants";
+import { COVERED, FLAG, PLAY } from "../../lib/mskai/constants";
 import { getStatus, sortedUniqArray, tileElements } from "./common";
 import { Game } from "./game";
-import { Player } from "./player";
 import { Tile } from "./tile";
 
 interface gameInfo {
   cols: number;
   rows: number;
-  count: number;
 }
 
 export const analyzeBtnClicked = (props: gameInfo) => {
   const {cols, rows} = props;
-  const count = props.count || 0;
-  const game = new Game(cols, rows, getStatus());
-  const player = new Player(game);
-  const analyzer = new Analyzer(cols, rows);
-
-  if (analyzer.status !== PLAY) {
-    setTimeout(() => {
-      const smile = document.querySelector('img[data-name="smile"]');
-      smile?.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }))
-      setTimeout(()=>analyzeBtnClicked({...props, count: 0}), 1000);
-    }, 5000);
-    return;
-  }
-
-  console.log("ANLYZING2...", analyzer, count);
-  const bombs = analyzer.searchBombs();
-  const countBombs = bombs.length;
-  console.log("bobms are ", bombs);
-  player.markFlags(bombs);
-  const openableTiles = analyzer.openableTiles();
-  const countOpenable = openableTiles.length;
-  console.log("openables are", openableTiles);
-  if (countBombs + countOpenable > 0) {
-    player.openOpenableTiles(openableTiles);
-    const newProps = {...props, count: count+1}
-    setTimeout(()=>analyzeBtnClicked(newProps), 500);
-  } else {
-    if (analyzer.isAllCovered()) {
-      const covered = analyzer.coveredTiles();
-      const choice = [covered[Math.floor(Math.random() * covered.length)]];
-      player.openOpenableTiles(choice);
-      const newProps = {...props, count: count+1}
-      setTimeout(()=>analyzeBtnClicked(newProps), 500);
-    } else {
-      const target = [analyzer.mostOpenableTile()];
-      const element = tileElements()[target[0]];
-      const src = element.getAttribute('src') || '';
-      element.setAttribute('src', '');
-      setTimeout(() => {
-        if (true || confirm(`target is ${target}`)) {
-          player.openOpenableTiles(target);
-          const newProps = {...props, count: 0}
-          setTimeout(()=>analyzeBtnClicked(newProps), 500);
-        } else {
-          element.setAttribute('src', src);
-        }
-      }, 500);
-    }
-  }
+  const game = new Game(cols, rows);
+  game.start();
 };
 
 
@@ -153,7 +104,6 @@ export class Analyzer {
 
   public openableTiles(): number[] {
     const isOpenedTiles = this.isOpenedTiles();
-    const coveredTiles = this.coveredTiles();
     const ret: number[] = [];
     isOpenedTiles.forEach(idx => {
       const tile = new Tile(idx, this.tiles[idx]);
@@ -175,7 +125,6 @@ export class Analyzer {
 
   public mostOpenableTile(): number {
     const elements = tileElements();
-    const isOpenedTiles = this.isOpenedTiles();
     const coveredTilesIndicies = this.coveredTiles();
     const tiles = coveredTilesIndicies.map(idx => {
       const tile = new Tile(idx, COVERED);
@@ -198,17 +147,18 @@ export class Analyzer {
             tile.probability += delta;
           }
         });
-        // const e1 = elements[idx];
-        // const e2 = elements[aIdx];
-        // debugger
         return aIdx;
       });
       if (indicies.filter(i => i !== undefined).length > 0)
         return tile;
     }).filter(i => i !== undefined);
-    // debugger
-    const ret = tiles.sort((first, second) => first.probability - second.probability)[0].position;
-    console.log(elements[ret]);
-    return ret;
+    let targets = coveredTilesIndicies;
+    if (tiles.length > 0) {
+      const sorted = tiles.sort((first, second) => first.probability - second.probability);
+      const minimum = sorted[0].probability;
+      targets = sorted.filter(tile=>tile.probability===minimum).map(tile=>tile.position);
+    }
+    const choice = targets[Math.floor(Math.random() * targets.length)];
+    return choice;
   }
 }

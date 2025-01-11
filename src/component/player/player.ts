@@ -1,14 +1,9 @@
 import { FLAG, PLAY } from "../../lib/mskai/constants";
 import { getStatus, getValueAt, tileElements } from "./common";
-import { Game } from "./game";
 
 // Player は具体的なオペレーションを実行する
 export class Player {
-  private game;
-
-  constructor(game: Game) {
-    this.game = game;
-  }
+  constructor() { }
 
   public markFlags(indecies: number[]) {
     if (indecies.length === 0) return
