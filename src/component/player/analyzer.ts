@@ -25,9 +25,27 @@ export const analyzeBtnClicked = (props: gameInfo) => {
     const newProps = {...props, count: count+1}
     setTimeout(()=>analyzeBtnClicked(newProps), 1000);
   } else {
-    const covered = analyzer.coveredTiles();
-    const target = [covered[Math.floor(Math.random() * covered.length)]];
-    if (count === 0) analyzer.openOpenableTiles(target);
+    if (analyzer.isAllCovered()) {
+      const covered = analyzer.coveredTiles();
+      const choice = [covered[Math.floor(Math.random() * covered.length)]];
+      analyzer.openOpenableTiles(choice);
+      const newProps = {...props, count: count+1}
+      setTimeout(()=>analyzeBtnClicked(newProps), 1000);
+    } else {
+      const target = [analyzer.mostOpenableTile()];
+      const element = analyzer.tileElements()[target[0]];
+      const src = element.getAttribute('src') || '';
+      element.setAttribute('src', '');
+      setTimeout(() => {
+        if (confirm(`target is ${target}`)) {
+          analyzer.openOpenableTiles(target);
+          const newProps = {...props, count: count+1}
+          setTimeout(()=>analyzeBtnClicked(newProps), 1000);
+        } else {
+          element.setAttribute('src', src);
+        }
+      }, 3000);
+    }
   }
 };
 
@@ -103,7 +121,7 @@ class Analyzer {
   }
 
   // 一つも開いていない場合は true
-  private isAllCovered(): boolean {
+  public isAllCovered(): boolean {
     return this.tiles.reduce((prev, current) => prev && (current == COVERED || current == FLAG), true);
   }
 
@@ -124,7 +142,7 @@ class Analyzer {
     }).filter(idx => idx !== undefined);
   }
 
-  private tileElements(): NodeListOf<HTMLImageElement> {
+  public tileElements(): NodeListOf<HTMLImageElement> {
     return document.querySelectorAll('div[data-id="board"] img');
   }
 
@@ -168,5 +186,44 @@ class Analyzer {
       }
     });
     return sortedUniqArray(ret);
+  }
+
+  public mostOpenableTile(): number {
+    const elements = this.tileElements();
+    const isOpenedTiles = this.isOpenedTiles();
+    const coveredTilesIndicies = this.coveredTiles();
+    const tiles = coveredTilesIndicies.map(idx => {
+      const tile = new Tile(idx, COVERED);
+      const aroundTilesIndicies = tile.around(this.cols, this.rows);
+      const indicies = aroundTilesIndicies.map(aIdx => {
+        const aTile = new Tile(aIdx, this.tiles[aIdx]);
+        if (aTile.value >= COVERED) return;
+
+        const around2TilesIndicies = aTile.around(this.cols, this.rows);
+        const countFlag = around2TilesIndicies.map(aaIdx => {
+          if (this.tiles[aaIdx] === FLAG) return true;
+        }).filter(b => b).length;
+        const countCovered = around2TilesIndicies.map(aaIdx => {
+          if (this.tiles[aaIdx] === COVERED) return true;
+        }).filter(b => b).length;
+        aTile.value -= countFlag
+        const delta = aTile.value / countCovered;
+        around2TilesIndicies.map(aaIdx => {
+          if (aaIdx === tile.position) {
+            tile.probability += delta;
+          }
+        });
+        // const e1 = elements[idx];
+        // const e2 = elements[aIdx];
+        // debugger
+        return aIdx;
+      });
+      if (indicies.filter(i => i !== undefined).length > 0)
+        return tile;
+    }).filter(i => i !== undefined);
+    // debugger
+    const ret = tiles.sort((first, second) => first.probability - second.probability)[0].position;
+    console.log(elements[ret]);
+    return ret;
   }
 }

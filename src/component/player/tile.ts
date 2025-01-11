@@ -1,10 +1,12 @@
 export class Tile {
   public position: number;
   public value: number;
+  public probability: number;
 
   constructor(position: number, value: number = 9) {
     this.position = position;
     this.value = value;
+    this.probability = 0;
   }
 
   public around(cols: number, rows: number): number[] {
