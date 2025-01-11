@@ -1,5 +1,7 @@
 import { COVERED, FLAG, FLAGGED, NOT_OPEN, PLAY } from "../../lib/mskai/constants";
-import { sortedUniqArray } from "./common";
+import { getStatus, sortedUniqArray, tileElements } from "./common";
+import { Game } from "./game";
+import { Player } from "./player";
 import { Tile } from "./tile";
 
 interface gameInfo {
@@ -11,6 +13,8 @@ interface gameInfo {
 export const analyzeBtnClicked = (props: gameInfo) => {
   const {cols, rows} = props;
   const count = props.count || 0;
+  const game = new Game(cols, rows, getStatus());
+  const player = new Player(game);
   const analyzer = new Analyzer(cols, rows);
 
   if (analyzer.status !== PLAY) {
@@ -26,29 +30,29 @@ export const analyzeBtnClicked = (props: gameInfo) => {
   const bombs = analyzer.searchBombs();
   const countBombs = bombs.length;
   console.log("bobms are ", bombs);
-  analyzer.markFlags(bombs);
+  player.markFlags(bombs);
   const openableTiles = analyzer.openableTiles();
   const countOpenable = openableTiles.length;
   console.log("openables are", openableTiles);
   if (countBombs + countOpenable > 0) {
-    analyzer.openOpenableTiles(openableTiles);
+    player.openOpenableTiles(openableTiles);
     const newProps = {...props, count: count+1}
     setTimeout(()=>analyzeBtnClicked(newProps), 500);
   } else {
     if (analyzer.isAllCovered()) {
       const covered = analyzer.coveredTiles();
       const choice = [covered[Math.floor(Math.random() * covered.length)]];
-      analyzer.openOpenableTiles(choice);
+      player.openOpenableTiles(choice);
       const newProps = {...props, count: count+1}
       setTimeout(()=>analyzeBtnClicked(newProps), 500);
     } else {
       const target = [analyzer.mostOpenableTile()];
-      const element = analyzer.tileElements()[target[0]];
+      const element = tileElements()[target[0]];
       const src = element.getAttribute('src') || '';
       element.setAttribute('src', '');
       setTimeout(() => {
         if (true || confirm(`target is ${target}`)) {
-          analyzer.openOpenableTiles(target);
+          player.openOpenableTiles(target);
           const newProps = {...props, count: 0}
           setTimeout(()=>analyzeBtnClicked(newProps), 500);
         } else {
@@ -60,7 +64,7 @@ export const analyzeBtnClicked = (props: gameInfo) => {
 };
 
 
-class Analyzer {
+export class Analyzer {
   private tiles: number[];
   private cols: number;
   private rows: number;
@@ -108,35 +112,6 @@ class Analyzer {
     .flat().sort((first: number, second: number) => first - second)));
   }
 
-  public markFlags(indecies: number[]) {
-    if (indecies.length === 0) return
-
-    setTimeout(() => {
-      const elements = this.tileElements();
-      const idx: number = indecies.shift() || 0;
-      const element = elements[idx];
-      if (this.getValueAt(element) !== FLAG)
-        element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
-      this.markFlags(indecies);
-    }, 100);
-  }
-
-  public openOpenableTiles(indecies: number[]): void {
-    const elements = this.tileElements();
-    if (indecies.length === 0) return
-
-    setTimeout(() => {
-      const idx: number = indecies.shift() || 0;
-      const status = this.getStatus();
-      if (status === PLAY) {
-        elements[idx].click();
-        setTimeout(this.getStatus, 10);
-      } else
-        console.log(`status is ${this.status}`);
-      this.openOpenableTiles(indecies);
-    }, 100);
-  }
-
   // 一つも開いていない場合は true
   public isAllCovered(): boolean {
     return this.tiles.reduce((prev, current) => prev && (current == COVERED || current == FLAG), true);
@@ -159,18 +134,10 @@ class Analyzer {
     }).filter(idx => idx !== undefined);
   }
 
-  public tileElements(): NodeListOf<HTMLImageElement> {
-    return document.querySelectorAll('div[data-id="board"] img');
-  }
-
   public read() {
-    this.status = this.getStatus();
-    const imgs = this.tileElements();
+    this.status = getStatus();
+    const imgs = tileElements();
     this.tiles = Array.from(imgs).map((node) => parseInt(node.getAttribute("data-tile") || '0'));
-  }
-
-  public getValueAt(node: HTMLImageElement) {
-    return parseInt(node.getAttribute("data-tile") || '0');
   }
 
   public at(x: number, y: number): number {
@@ -182,11 +149,6 @@ class Analyzer {
 
   public tileAt(x: number, y: number): number {
     return this.tiles[this.at(x, y)];
-  }
-
-  private getStatus(): number {
-    const st: string = document.querySelector('img[data-name="smile"]').getAttribute('data-game-status') || '0';
-    return parseInt(st);
   }
 
   public openableTiles(): number[] {
@@ -212,7 +174,7 @@ class Analyzer {
   }
 
   public mostOpenableTile(): number {
-    const elements = this.tileElements();
+    const elements = tileElements();
     const isOpenedTiles = this.isOpenedTiles();
     const coveredTilesIndicies = this.coveredTiles();
     const tiles = coveredTilesIndicies.map(idx => {
