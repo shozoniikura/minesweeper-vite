@@ -1,4 +1,4 @@
-import { COVERED, FLAG, FLAGGED, NOT_OPEN } from "../../lib/mskai/constants";
+import { COVERED, FLAG, FLAGGED, NOT_OPEN, PLAY } from "../../lib/mskai/constants";
 import { sortedUniqArray } from "./common";
 import { Tile } from "./tile";
 
@@ -12,6 +12,16 @@ export const analyzeBtnClicked = (props: gameInfo) => {
   const {cols, rows} = props;
   const count = props.count || 0;
   const analyzer = new Analyzer(cols, rows);
+
+  if (analyzer.status !== PLAY) {
+    setTimeout(() => {
+      const smile = document.querySelector('img[data-name="smile"]');
+      smile?.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }))
+      setTimeout(()=>analyzeBtnClicked({...props, count: 0}), 1000);
+    }, 5000);
+    return;
+  }
+
   console.log("ANLYZING2...", analyzer, count);
   const bombs = analyzer.searchBombs();
   const countBombs = bombs.length;
@@ -23,28 +33,28 @@ export const analyzeBtnClicked = (props: gameInfo) => {
   if (countBombs + countOpenable > 0) {
     analyzer.openOpenableTiles(openableTiles);
     const newProps = {...props, count: count+1}
-    setTimeout(()=>analyzeBtnClicked(newProps), 1000);
+    setTimeout(()=>analyzeBtnClicked(newProps), 500);
   } else {
     if (analyzer.isAllCovered()) {
       const covered = analyzer.coveredTiles();
       const choice = [covered[Math.floor(Math.random() * covered.length)]];
       analyzer.openOpenableTiles(choice);
       const newProps = {...props, count: count+1}
-      setTimeout(()=>analyzeBtnClicked(newProps), 1000);
+      setTimeout(()=>analyzeBtnClicked(newProps), 500);
     } else {
       const target = [analyzer.mostOpenableTile()];
       const element = analyzer.tileElements()[target[0]];
       const src = element.getAttribute('src') || '';
       element.setAttribute('src', '');
       setTimeout(() => {
-        if (confirm(`target is ${target}`)) {
+        if (true || confirm(`target is ${target}`)) {
           analyzer.openOpenableTiles(target);
-          const newProps = {...props, count: count+1}
-          setTimeout(()=>analyzeBtnClicked(newProps), 1000);
+          const newProps = {...props, count: 0}
+          setTimeout(()=>analyzeBtnClicked(newProps), 500);
         } else {
           element.setAttribute('src', src);
         }
-      }, 3000);
+      }, 500);
     }
   }
 };
@@ -54,6 +64,7 @@ class Analyzer {
   private tiles: number[];
   private cols: number;
   private rows: number;
+  public status: number;
 
   constructor (
     cols: number,
@@ -61,6 +72,7 @@ class Analyzer {
   ) {
     this.cols = cols;
     this.rows = rows;
+    this.status = PLAY;
     this.tiles = [];
     this.read();
   }
@@ -115,7 +127,12 @@ class Analyzer {
 
     setTimeout(() => {
       const idx: number = indecies.shift() || 0;
-      elements[idx].click();
+      const status = this.getStatus();
+      if (status === PLAY) {
+        elements[idx].click();
+        setTimeout(this.getStatus, 10);
+      } else
+        console.log(`status is ${this.status}`);
       this.openOpenableTiles(indecies);
     }, 100);
   }
@@ -147,6 +164,7 @@ class Analyzer {
   }
 
   public read() {
+    this.status = this.getStatus();
     const imgs = this.tileElements();
     this.tiles = Array.from(imgs).map((node) => parseInt(node.getAttribute("data-tile") || '0'));
   }
@@ -164,6 +182,11 @@ class Analyzer {
 
   public tileAt(x: number, y: number): number {
     return this.tiles[this.at(x, y)];
+  }
+
+  private getStatus(): number {
+    const st: string = document.querySelector('img[data-name="smile"]').getAttribute('data-game-status') || '0';
+    return parseInt(st);
   }
 
   public openableTiles(): number[] {

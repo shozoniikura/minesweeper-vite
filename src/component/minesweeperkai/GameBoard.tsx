@@ -60,7 +60,8 @@ function InfoSection({
 
   const smilePressed = () => dispatch(genAction(ACTION.SMILE_DOWN, {}));
   const smileReleased = () => changeLevel(game.level);
-  const analyzeBtnClickedHandler = () => analyzeBtnClicked({cols: game.cols, rows: game.rows})
+  const analyzeBtnClickedHandler = () =>
+    analyzeBtnClicked({cols: game.cols, rows: game.rows, count: 0, status: game.gameState})
 
   return (
     <div className={infoStyle}>
@@ -74,7 +75,7 @@ function InfoSection({
         {(() => {
           const spIndex = getSmileSpriteIndex(game);
           const url = handler.smile.getUrl(spIndex);
-          return <img src={url} onMouseDown={smilePressed} onMouseUp={smileReleased} />
+          return <img src={url} onMouseDown={smilePressed} onMouseUp={smileReleased} data-name="smile" data-game-status={game.gameState} />
         })()}
         <button onClick={analyzeBtnClickedHandler}>Analyze</button>
       </div>
