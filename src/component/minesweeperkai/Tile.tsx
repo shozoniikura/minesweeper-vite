@@ -4,14 +4,15 @@
 
 interface TileProp {
   src: string,   // imgタグのsrcに入れるurl
-  index: number, // ゲーム版上のindex 
+  index: number, // ゲーム版上のindex
   leftClick: (i: number) => void,
   rightClick: (e: React.MouseEvent<HTMLImageElement>, i: number) => void,
   doubleClick: (e: React.MouseEvent<HTMLImageElement>, i: number) => void,
+  tileValue: number,
 }
 
 export default function Tile(
-  { src, index, leftClick, rightClick, doubleClick }: TileProp
+  { src, index, tileValue, leftClick, rightClick, doubleClick }: TileProp
 ) {
   return (
     <img
@@ -19,6 +20,8 @@ export default function Tile(
       onClick={() => leftClick(index)}
       onContextMenu={(e) => rightClick(e, index)}
       onDoubleClick={(e) => doubleClick(e, index)}
+      data-tile={tileValue}
+      alt={tileValue.toString()}
     >
     </img>
   );

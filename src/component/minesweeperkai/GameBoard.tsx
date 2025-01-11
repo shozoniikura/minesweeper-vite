@@ -6,6 +6,7 @@ import { getGroundSpriteIndex, getSmileSpriteIndex, getTimerSpriteIndices, getRe
 import { genAction } from "../../lib/mskai/reducer"
 import { ACTION } from "../../lib/mskai/constants";
 import Tile from "./Tile";
+import { analyzeBtnClicked } from "../player/analyzer";
 
 
 /************************************************
@@ -59,6 +60,8 @@ function InfoSection({
 
   const smilePressed = () => dispatch(genAction(ACTION.SMILE_DOWN, {}));
   const smileReleased = () => changeLevel(game.level);
+  const analyzeBtnClickedHandler = () => analyzeBtnClicked({cols: game.cols, rows: game.rows})
+
   return (
     <div className={infoStyle}>
       <div>
@@ -73,6 +76,7 @@ function InfoSection({
           const url = handler.smile.getUrl(spIndex);
           return <img src={url} onMouseDown={smilePressed} onMouseUp={smileReleased} />
         })()}
+        <button onClick={analyzeBtnClickedHandler}>Analyze</button>
       </div>
       <div>
         {getTimerSpriteIndices(timer).map((spIndex, i) => {
@@ -107,12 +111,12 @@ function MinesSection({ game, handler, boardStyle, dispatch }: MinesProp) {
   }
 
   return (
-    <div className={boardStyle}>
+    <div className={boardStyle} data-id="board">
       {game.tiles.map((_, i) => {
         const spIndex = getGroundSpriteIndex(game, i);
         const url = handler.layer.getUrl(spIndex);
         return (
-          <Tile key={i} index={i} src={url}
+          <Tile key={i} index={i} src={url} tileValue={spIndex}
             leftClick={leftClick} rightClick={rightClick} doubleClick={doubleClick}
           />
         );
