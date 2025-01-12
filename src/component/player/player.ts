@@ -3,35 +3,48 @@ import { getStatus, getValueAt, tileElements } from "./common";
 
 // Player は具体的なオペレーションを実行する
 export class Player {
-  constructor() { }
+  private waitAfterFlag: number;
+  private waitAfterOpen: number;
+  private waitRead: number;
 
-  public markFlags(indecies: number[]) {
-    if (indecies.length === 0) return
+  constructor() {
+    this.waitAfterFlag = 100;
+    this.waitAfterOpen = 100;
+    this.waitRead = 10;
+  }
+
+  // 右クリックしながらフラグを立てる
+  public markFlags(indices: number[]) {
+    if (indices.length === 0) return
 
     setTimeout(() => {
       const elements = tileElements();
-      const idx: number = indecies.shift() || 0;
+      const idx: number = indices.shift() || 0;
       const element = elements[idx];
-      if (getValueAt(element) !== FLAG)
-        element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
-      this.markFlags(indecies);
-    }, 100);
+      if (getValueAt(element) !== FLAG) {
+        const rightClick = new MouseEvent('contextmenu',
+          { bubbles: true, cancelable: true });
+        element.dispatchEvent(rightClick);
+      }
+      this.markFlags(indices);
+    }, this.waitAfterFlag);
   }
 
-  public openOpenableTiles(indecies: number[]): void {
+  // 左クリックしながらタイルを開ける
+  public openOpenableTiles(indices: number[]): void {
     const elements = tileElements();
-    if (indecies.length === 0) return
+    if (indices.length === 0) return
 
     setTimeout(() => {
-      const idx: number = indecies.shift() || 0;
+      const idx: number = indices.shift() || 0;
       const status = getStatus();
       if (status === PLAY) {
+        // タイルが開いているかどうかは不明だが、そのままクリック
         elements[idx].click();
-        setTimeout(getStatus, 10);
+        setTimeout(getStatus, this.waitRead);
       } else
         console.log(`status is ${status}`);
-      this.openOpenableTiles(indecies);
-    }, 100);
+      this.openOpenableTiles(indices);
+    }, this.waitAfterOpen);
   }
-
 }

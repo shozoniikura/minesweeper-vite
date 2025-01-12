@@ -2,6 +2,7 @@ import { COVERED, FLAG, PLAY } from "../../lib/mskai/constants";
 import { getStatus, sortedUniqArray, tileElements } from "./common";
 import { Game } from "./game";
 import { Tile } from "./tile";
+import { EdgesType } from "./tile";
 
 interface gameInfo {
   cols: number;
@@ -61,6 +62,65 @@ export class Analyzer {
       }
     }).filter(ary => ary !== undefined)
     .flat().sort((first: number, second: number) => first - second)));
+  }
+
+  public searchTheoreticalMines(tiles: Tile[]): number[] {
+    // tiles.filter(tile => 0 < tile.value && tile.value < COVERED).forEach((tile: Tile) => {
+    //   console.log([tile, tile.around(this.cols, this.rows).map(aIdx => tiles[aIdx])]);
+    // });
+    const tilesWithTwo = tiles.filter(tile => tile.value === 2);
+    // console.log(tilesWithTwo);
+    const mines: number[] = [];
+    tilesWithTwo.forEach(tile => {
+      const edges: { [key: string]: Tile[] } = {};
+      const edgeIndices: EdgesType = tile.edges(this.cols, this.rows);
+      Object.keys(edgeIndices).forEach(key => {
+        edges[key] = edgeIndices[key].map((idx: number) => tiles[idx]);
+      });
+      if (tiles[tile.left(this.cols, this.rows)]?.value === 1) {
+        if (this.isOpenedEdge(edges['top']) && this.isCoveredEdge(edges['bottom'])) {
+          mines.push(tile.rightDown(this.cols, this.rows));
+        }
+        if (this.isOpenedEdge(edges['bottom']) && this.isCoveredEdge(edges['top'])) {
+          mines.push(tile.rightUp(this.cols, this.rows));
+        }
+      }
+      if (tiles[tile.right(this.cols, this.rows)]?.value === 1) {
+        if (this.isOpenedEdge(edges['top']) && this.isCoveredEdge(edges['bottom'])) {
+          mines.push(tile.leftDown(this.cols, this.rows));
+        }
+        if (this.isOpenedEdge(edges['bottom']) && this.isCoveredEdge(edges['top'])) {
+          mines.push(tile.leftUp(this.cols, this.rows));
+        }
+      }
+      if (tiles[tile.up(this.cols, this.rows)]?.value === 1) {
+        if (this.isOpenedEdge(edges['left']) && this.isCoveredEdge(edges['right'])) {
+          mines.push(tile.rightDown(this.cols, this.rows));
+        }
+        if (this.isOpenedEdge(edges['right']) && this.isCoveredEdge(edges['left'])) {
+          mines.push(tile.leftDown(this.cols, this.rows));
+        }
+      }
+      if (tiles[tile.down(this.cols, this.rows)]?.value === 1) {
+        if (this.isOpenedEdge(edges['left']) && this.isCoveredEdge(edges['right'])) {
+          mines.push(tile.rightUp(this.cols, this.rows));
+        }
+        if (this.isOpenedEdge(edges['right']) && this.isCoveredEdge(edges['left'])) {
+          mines.push(tile.leftUp(this.cols, this.rows));
+        }
+      }
+    });
+    return mines;
+  }
+
+  public isCoveredEdge(edge: Tile[]): boolean {
+    return edge.map(tile => tile.value)
+      .reduce((prev, value) => prev && value === COVERED, true);
+  }
+
+  public isOpenedEdge(edge: Tile[]): boolean {
+    return edge.map(tile => tile.value)
+      .reduce((prev, value) => prev && value < COVERED, true);
   }
 
   // 一つも開いていない場合は true
@@ -160,5 +220,10 @@ export class Analyzer {
     }
     const choice = targets[Math.floor(Math.random() * targets.length)];
     return choice;
+  }
+
+  public cloneTiles(): Tile[] {
+    this.read();
+    return this.tiles.map((value, idx) => new Tile(idx, value));
   }
 }
