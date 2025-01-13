@@ -51,7 +51,10 @@ export class Game {
       const tiles = this.simplifyBoard();
       const mineIndices = this.analyzer.searchTheoreticalMines(tiles);
       console.log("aaa ", mineIndices.map(idx=>tiles[idx].ele));
-      this.player.markFlags(mineIndices);
+      if (mineIndices.length > 0) {
+        this.player.markFlags(mineIndices);
+        setTimeout(()=>this.start(count+1), 500);
+      }
 
       // // 不確実な場合
       // this.processUncertainty(count);
