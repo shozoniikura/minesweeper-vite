@@ -77,7 +77,8 @@ export class Analyzer {
       Object.keys(edgeIndices).forEach(key => {
         edges[key] = edgeIndices[key].map((idx: number) => tiles[idx]);
       });
-      if (tiles[tile.left(this.cols, this.rows)]?.value === 1) {
+      if (tiles[tile.left(this.cols, this.rows)]?.value === 1
+      && tiles[tile.right(this.cols, this.rows)].isNotCovered()) {
         if (this.isOpenedEdge(edges['top']) && this.isCoveredEdge(edges['bottom'])) {
           mines.push(tile.rightDown(this.cols, this.rows));
         }
@@ -85,7 +86,8 @@ export class Analyzer {
           mines.push(tile.rightUp(this.cols, this.rows));
         }
       }
-      if (tiles[tile.right(this.cols, this.rows)]?.value === 1) {
+      if (tiles[tile.right(this.cols, this.rows)]?.value === 1
+      && tiles[tile.left(this.cols, this.rows)].isNotCovered()) {
         if (this.isOpenedEdge(edges['top']) && this.isCoveredEdge(edges['bottom'])) {
           mines.push(tile.leftDown(this.cols, this.rows));
         }
@@ -93,7 +95,8 @@ export class Analyzer {
           mines.push(tile.leftUp(this.cols, this.rows));
         }
       }
-      if (tiles[tile.up(this.cols, this.rows)]?.value === 1) {
+      if (tiles[tile.up(this.cols, this.rows)]?.value === 1
+      && tiles[tile.down(this.cols, this.rows)].isNotCovered()) {
         if (this.isOpenedEdge(edges['left']) && this.isCoveredEdge(edges['right'])) {
           mines.push(tile.rightDown(this.cols, this.rows));
         }
@@ -101,7 +104,8 @@ export class Analyzer {
           mines.push(tile.leftDown(this.cols, this.rows));
         }
       }
-      if (tiles[tile.down(this.cols, this.rows)]?.value === 1) {
+      if (tiles[tile.down(this.cols, this.rows)]?.value === 1
+      && tiles[tile.up(this.cols, this.rows)].isNotCovered()) {
         if (this.isOpenedEdge(edges['left']) && this.isCoveredEdge(edges['right'])) {
           mines.push(tile.rightUp(this.cols, this.rows));
         }

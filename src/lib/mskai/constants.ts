@@ -1,4 +1,5 @@
 // 地雷版の各マスのspriteの添え時に対応した定数
+export const IN_WALL = -1;  // x, yで検索したときに壁を越えている状態
 export const EMPTY = 0;     // 空白マス。隣接マスに地雷が無い&自分も地雷でない。
 export const COVERED = 9;   // まだクリックしていないマス
 export const FLAG = 10;     // 旗のマス（使ってないかも）
