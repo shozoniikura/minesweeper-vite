@@ -1,59 +1,26 @@
-import { COVERED, FLAG, FLAGGED, NOT_OPEN } from "../../lib/mskai/constants";
-import { sortedUniqArray } from "./common";
+import { COVERED, FLAG, PLAY } from "../../lib/mskai/constants";
+import { getStatus, sortedUniqArray, tileElements } from "./common";
+import { Game } from "./game";
 import { Tile } from "./tile";
+import { EdgesType } from "./tile";
 
 interface gameInfo {
   cols: number;
   rows: number;
-  count: number;
 }
 
 export const analyzeBtnClicked = (props: gameInfo) => {
   const {cols, rows} = props;
-  const count = props.count || 0;
-  const analyzer = new Analyzer(cols, rows);
-  console.log("ANLYZING2...", analyzer, count);
-  const bombs = analyzer.searchBombs();
-  const countBombs = bombs.length;
-  console.log("bobms are ", bombs);
-  analyzer.markFlags(bombs);
-  const openableTiles = analyzer.openableTiles();
-  const countOpenable = openableTiles.length;
-  console.log("openables are", openableTiles);
-  if (countBombs + countOpenable > 0) {
-    analyzer.openOpenableTiles(openableTiles);
-    const newProps = {...props, count: count+1}
-    setTimeout(()=>analyzeBtnClicked(newProps), 1000);
-  } else {
-    if (analyzer.isAllCovered()) {
-      const covered = analyzer.coveredTiles();
-      const choice = [covered[Math.floor(Math.random() * covered.length)]];
-      analyzer.openOpenableTiles(choice);
-      const newProps = {...props, count: count+1}
-      setTimeout(()=>analyzeBtnClicked(newProps), 1000);
-    } else {
-      const target = [analyzer.mostOpenableTile()];
-      const element = analyzer.tileElements()[target[0]];
-      const src = element.getAttribute('src') || '';
-      element.setAttribute('src', '');
-      setTimeout(() => {
-        if (confirm(`target is ${target}`)) {
-          analyzer.openOpenableTiles(target);
-          const newProps = {...props, count: count+1}
-          setTimeout(()=>analyzeBtnClicked(newProps), 1000);
-        } else {
-          element.setAttribute('src', src);
-        }
-      }, 3000);
-    }
-  }
+  const game = new Game(cols, rows);
+  game.start();
 };
 
 
-class Analyzer {
+export class Analyzer {
   private tiles: number[];
   private cols: number;
   private rows: number;
+  public status: number;
 
   constructor (
     cols: number,
@@ -61,6 +28,7 @@ class Analyzer {
   ) {
     this.cols = cols;
     this.rows = rows;
+    this.status = PLAY;
     this.tiles = [];
     this.read();
   }
@@ -96,28 +64,76 @@ class Analyzer {
     .flat().sort((first: number, second: number) => first - second)));
   }
 
-  public markFlags(indecies: number[]) {
-    if (indecies.length === 0) return
-
-    setTimeout(() => {
-      const elements = this.tileElements();
-      const idx: number = indecies.shift() || 0;
-      const element = elements[idx];
-      if (this.getValueAt(element) !== FLAG)
-        element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
-      this.markFlags(indecies);
-    }, 100);
+  // 次のような配置を見つけたらフラグを立てる
+  // ___    ___
+  // _21 -> _21
+  // CCC    FCC
+  public searchTheoreticalMines(tiles: Tile[]): number[] {
+    const tilesWithTwo = tiles.filter(tile => tile.value === 2);
+    // console.log(tilesWithTwo);
+    const mines: number[] = [];
+    tilesWithTwo.forEach(tile => {
+      const edges: { [key: string]: Tile[] } = {};
+      const edgeIndices: EdgesType = tile.edges(this.cols, this.rows);
+      Object.keys(edgeIndices).forEach(key => {
+        edges[key] = edgeIndices[key].map((idx: number) => tiles[idx]);
+      });
+      if (tiles[tile.left(this.cols, this.rows)]?.value === 1
+      && tiles[tile.right(this.cols, this.rows)].isNotCovered()) {
+        if (this.isOpenedEdge(edges['top']) && this.isCoveredEdge(edges['bottom'])) {
+          mines.push(tile.rightDown(this.cols, this.rows));
+        }
+        if (this.isOpenedEdge(edges['bottom']) && this.isCoveredEdge(edges['top'])) {
+          mines.push(tile.rightUp(this.cols, this.rows));
+        }
+      }
+      if (tiles[tile.right(this.cols, this.rows)]?.value === 1
+      && tiles[tile.left(this.cols, this.rows)].isNotCovered()) {
+        if (this.isOpenedEdge(edges['top']) && this.isCoveredEdge(edges['bottom'])) {
+          mines.push(tile.leftDown(this.cols, this.rows));
+        }
+        if (this.isOpenedEdge(edges['bottom']) && this.isCoveredEdge(edges['top'])) {
+          mines.push(tile.leftUp(this.cols, this.rows));
+        }
+      }
+      if (tiles[tile.up(this.cols, this.rows)]?.value === 1
+      && tiles[tile.down(this.cols, this.rows)].isNotCovered()) {
+        if (this.isOpenedEdge(edges['left']) && this.isCoveredEdge(edges['right'])) {
+          mines.push(tile.rightDown(this.cols, this.rows));
+        }
+        if (this.isOpenedEdge(edges['right']) && this.isCoveredEdge(edges['left'])) {
+          mines.push(tile.leftDown(this.cols, this.rows));
+        }
+      }
+      if (tiles[tile.down(this.cols, this.rows)]?.value === 1
+      && tiles[tile.up(this.cols, this.rows)].isNotCovered()) {
+        if (this.isOpenedEdge(edges['left']) && this.isCoveredEdge(edges['right'])) {
+          mines.push(tile.rightUp(this.cols, this.rows));
+        }
+        if (this.isOpenedEdge(edges['right']) && this.isCoveredEdge(edges['left'])) {
+          mines.push(tile.leftUp(this.cols, this.rows));
+        }
+      }
+    });
+    return mines;
   }
 
-  public openOpenableTiles(indecies: number[]): void {
-    const elements = this.tileElements();
-    if (indecies.length === 0) return
+  // 次のような配置を見つけたらタイルを開けられる
+  // ___    ___
+  // _11 -> _11
+  // _CC    _CX
+  public searchTheoreticalOpenableTiles(tiles: Tile[]): number[] {
+    return [];
+  }
 
-    setTimeout(() => {
-      const idx: number = indecies.shift() || 0;
-      elements[idx].click();
-      this.openOpenableTiles(indecies);
-    }, 100);
+  public isCoveredEdge(edge: Tile[]): boolean {
+    return edge.map(tile => tile.value)
+      .reduce((prev, value) => prev && value === COVERED, true);
+  }
+
+  public isOpenedEdge(edge: Tile[]): boolean {
+    return edge.map(tile => tile.value)
+      .reduce((prev, value) => prev && value < COVERED, true);
   }
 
   // 一つも開いていない場合は true
@@ -142,17 +158,10 @@ class Analyzer {
     }).filter(idx => idx !== undefined);
   }
 
-  public tileElements(): NodeListOf<HTMLImageElement> {
-    return document.querySelectorAll('div[data-id="board"] img');
-  }
-
   public read() {
-    const imgs = this.tileElements();
+    this.status = getStatus();
+    const imgs = tileElements();
     this.tiles = Array.from(imgs).map((node) => parseInt(node.getAttribute("data-tile") || '0'));
-  }
-
-  public getValueAt(node: HTMLImageElement) {
-    return parseInt(node.getAttribute("data-tile") || '0');
   }
 
   public at(x: number, y: number): number {
@@ -168,7 +177,6 @@ class Analyzer {
 
   public openableTiles(): number[] {
     const isOpenedTiles = this.isOpenedTiles();
-    const coveredTiles = this.coveredTiles();
     const ret: number[] = [];
     isOpenedTiles.forEach(idx => {
       const tile = new Tile(idx, this.tiles[idx]);
@@ -189,8 +197,7 @@ class Analyzer {
   }
 
   public mostOpenableTile(): number {
-    const elements = this.tileElements();
-    const isOpenedTiles = this.isOpenedTiles();
+    const elements = tileElements();
     const coveredTilesIndicies = this.coveredTiles();
     const tiles = coveredTilesIndicies.map(idx => {
       const tile = new Tile(idx, COVERED);
@@ -213,17 +220,23 @@ class Analyzer {
             tile.probability += delta;
           }
         });
-        // const e1 = elements[idx];
-        // const e2 = elements[aIdx];
-        // debugger
         return aIdx;
       });
       if (indicies.filter(i => i !== undefined).length > 0)
         return tile;
     }).filter(i => i !== undefined);
-    // debugger
-    const ret = tiles.sort((first, second) => first.probability - second.probability)[0].position;
-    console.log(elements[ret]);
-    return ret;
+    let targets = coveredTilesIndicies;
+    if (tiles.length > 0) {
+      const sorted = tiles.sort((first, second) => first.probability - second.probability);
+      const minimum = sorted[0].probability;
+      targets = sorted.filter(tile=>tile.probability===minimum).map(tile=>tile.position);
+    }
+    const choice = targets[Math.floor(Math.random() * targets.length)];
+    return choice;
+  }
+
+  public cloneTiles(): Tile[] {
+    this.read();
+    return this.tiles.map((value, idx) => new Tile(idx, value));
   }
 }

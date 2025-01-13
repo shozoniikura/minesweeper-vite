@@ -16,10 +16,11 @@ interface KeyLevelMap {
     [key: string]: LevelInterface
 }
 
-//　選択可能なlevel情報を保持したオブジェクト
+// 選択可能なlevel情報を保持したオブジェクト
 export const LEVELS: KeyLevelMap = {
     [EASY]: { cols: 8, rows: 8, bombs: 8, level: EASY },
     [MEDIUM]: { cols: 16, rows: 16, bombs: 45, level: MEDIUM },
     [HARD]: { cols: 30, rows: 16, bombs: 90, level: HARD },
-    [EXTREME]: { cols: 48, rows: 68, bombs: 777, level: EXTREME },
+    [EXTREME]: { cols: 68, rows: 48, bombs: 777, level: EXTREME },
+    // [EXTREME]: { cols: 48, rows: 68, bombs: 777, level: EXTREME },
 }

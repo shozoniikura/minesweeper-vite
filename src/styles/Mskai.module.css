@@ -115,7 +115,7 @@
 }
 
 .extremeCols {
-    grid-template-columns: repeat(48, 25px);
+    grid-template-columns: repeat(68, 25px);
 }
 
 .extremeInfoWidth {
