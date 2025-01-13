@@ -54,15 +54,23 @@ export class Game {
         this.player.markFlags(mineIndices);
         setTimeout(()=>this.start(count+1), 500);
       } else {
-        const openableIndices = this.analyzer.searchTheoreticalOpenableTiles(tiles);
-        if (openableIndices.length > 0) {
-          this.player.openOpenableTiles(openableIndices);
-          setTimeout(()=>this.start(count+1), 500);
-        } else {
-          // 不確実な場合
-          this.processUncertainty(count);
-        }
+        // const openableIndices = this.analyzer.searchTheoreticalOpenableTiles(tiles);
+        // if (openableIndices.length > 0) {
+        //   this.player.openOpenableTiles(openableIndices);
+        //   setTimeout(()=>this.start(count+1), 500);
+        // } else {
+        //   // 不確実な場合
+        //   // this.processUncertainty(count);
+        // }
       }
+    }
+  }
+
+  public newFeature() {
+    const tiles = this.simplifyBoard();
+    const openableIndices = this.analyzer.searchTheoreticalOpenableTiles(tiles);
+    if (openableIndices.length > 0) {
+      this.player.openOpenableTiles(openableIndices);
     }
   }
 
@@ -91,7 +99,7 @@ export class Game {
       const covered = this.analyzer.coveredTiles();
       const choice = [covered[Math.floor(Math.random() * covered.length)]];
       this.player.openOpenableTiles(choice);
-      setTimeout(()=>this.start(count+1), 500);
+      // setTimeout(()=>this.start(count+1), 500);
     } else {
       const target = [this.analyzer.mostOpenableTile()];
       const element = tileElements()[target[0]];
@@ -101,7 +109,7 @@ export class Game {
         // if (confirm(`target is ${target}`)) {
         if (true) {
           this.player.openOpenableTiles(target);
-          setTimeout(()=>this.start(0), 500);
+          // setTimeout(()=>this.start(0), 500);
         } else {
           element.setAttribute('src', src);
         }

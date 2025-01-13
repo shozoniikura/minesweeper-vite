@@ -7,6 +7,7 @@ import { genAction } from "../../lib/mskai/reducer"
 import { ACTION } from "../../lib/mskai/constants";
 import Tile from "./Tile";
 import { analyzeBtnClicked } from "../player/analyzer";
+import { NewFeatureButton, PilotStartButton, ProbabilityButton } from "../player/pilotButtons";
 
 
 /************************************************
@@ -60,8 +61,8 @@ function InfoSection({
 
   const smilePressed = () => dispatch(genAction(ACTION.SMILE_DOWN, {}));
   const smileReleased = () => changeLevel(game.level);
-  const analyzeBtnClickedHandler = () =>
-    analyzeBtnClicked({cols: game.cols, rows: game.rows, count: 0, status: game.gameState})
+  const analyzeBtnClickedHandler = (handlerType: number) =>
+    analyzeBtnClicked({cols: game.cols, rows: game.rows, status: game.gameState, handlerType})
 
   return (
     <div className={infoStyle}>
@@ -77,7 +78,9 @@ function InfoSection({
           const url = handler.smile.getUrl(spIndex);
           return <img src={url} onMouseDown={smilePressed} onMouseUp={smileReleased} data-name="smile" data-game-status={game.gameState} />
         })()}
-        <button onClick={analyzeBtnClickedHandler}>Analyze</button>
+        <PilotStartButton onClick={analyzeBtnClickedHandler} />
+        <NewFeatureButton onClick={analyzeBtnClickedHandler} />
+        <ProbabilityButton onClick={analyzeBtnClickedHandler} />
       </div>
       <div>
         {getTimerSpriteIndices(timer).map((spIndex, i) => {

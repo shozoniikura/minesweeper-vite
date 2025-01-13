@@ -1,4 +1,4 @@
-import { COVERED, FLAG, PLAY } from "../../lib/mskai/constants";
+import { AUTO_PILOT, COVERED, FLAG, NEW_FEATURE, PLAY, PROBABILITY } from "../../lib/mskai/constants";
 import { getStatus, sortedUniqArray, tileElements } from "./common";
 import { Game } from "./game";
 import { Tile } from "./tile";
@@ -7,12 +7,29 @@ import { EdgesType } from "./tile";
 interface gameInfo {
   cols: number;
   rows: number;
+  status: number;
+  handlerType: number;
 }
 
 export const analyzeBtnClicked = (props: gameInfo) => {
-  const {cols, rows} = props;
+  const {cols, rows, handlerType} = props;
   const game = new Game(cols, rows);
-  game.start();
+  switch (handlerType) {
+    case AUTO_PILOT:
+      game.start();
+      break;
+    case NEW_FEATURE:
+      console.log('NEW_FEATURE');
+      game.newFeature();
+      break;
+    case PROBABILITY:
+      console.log('PROBABILITY');
+      game.processUncertainty(0);
+      break;
+    default:
+      game.start();
+      break;
+  }
 };
 
 
@@ -123,7 +140,10 @@ export class Analyzer {
   // _11 -> _11
   // _CC    _CX
   public searchTheoreticalOpenableTiles(tiles: Tile[]): number[] {
-    return [];
+    const covered = this.coveredTiles();
+    const ret = covered[Math.floor(Math.random() * covered.length)].position
+    console.log(ret, tiles[ret]);
+    return [ret];
   }
 
   public isCoveredEdge(edge: Tile[]): boolean {
