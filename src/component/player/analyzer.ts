@@ -64,10 +64,11 @@ export class Analyzer {
     .flat().sort((first: number, second: number) => first - second)));
   }
 
+  // 次のような配置を見つけたらフラグを立てる
+  // ___    ___
+  // _21 -> _21
+  // CCC    FCC
   public searchTheoreticalMines(tiles: Tile[]): number[] {
-    // tiles.filter(tile => 0 < tile.value && tile.value < COVERED).forEach((tile: Tile) => {
-    //   console.log([tile, tile.around(this.cols, this.rows).map(aIdx => tiles[aIdx])]);
-    // });
     const tilesWithTwo = tiles.filter(tile => tile.value === 2);
     // console.log(tilesWithTwo);
     const mines: number[] = [];
@@ -115,6 +116,14 @@ export class Analyzer {
       }
     });
     return mines;
+  }
+
+  // 次のような配置を見つけたらタイルを開けられる
+  // ___    ___
+  // _11 -> _11
+  // _CC    _CX
+  public searchTheoreticalOpenableTiles(tiles: Tile[]): number[] {
+    return [];
   }
 
   public isCoveredEdge(edge: Tile[]): boolean {

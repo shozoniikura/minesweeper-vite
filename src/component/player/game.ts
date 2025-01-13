@@ -50,14 +50,19 @@ export class Game {
       // 経験上・理論上、地雷があると予想される場所を探す
       const tiles = this.simplifyBoard();
       const mineIndices = this.analyzer.searchTheoreticalMines(tiles);
-      console.log("aaa ", mineIndices.map(idx=>tiles[idx].ele));
       if (mineIndices.length > 0) {
         this.player.markFlags(mineIndices);
         setTimeout(()=>this.start(count+1), 500);
+      } else {
+        const openableIndices = this.analyzer.searchTheoreticalOpenableTiles(tiles);
+        if (openableIndices.length > 0) {
+          this.player.openOpenableTiles(openableIndices);
+          setTimeout(()=>this.start(count+1), 500);
+        } else {
+          // 不確実な場合
+          this.processUncertainty(count);
+        }
       }
-
-      // // 不確実な場合
-      // this.processUncertainty(count);
     }
   }
 
@@ -77,11 +82,8 @@ export class Game {
         tile.value = 0;
       }
     });
-    // console.log(tiles);
     return tiles;
-    // .filter(tile => tile.value > 0);
   }
-
 
   // 地雷も開けられるタイルも判らない場合は、確率だけで検索する
   public processUncertainty(count: number) {
@@ -91,21 +93,19 @@ export class Game {
       this.player.openOpenableTiles(choice);
       setTimeout(()=>this.start(count+1), 500);
     } else {
-      // const indices = this.analyzer.searchTheoreticalMines(tiles);
-      // console.log(indices);
-      // const target = [this.analyzer.mostOpenableTile()];
-      // const element = tileElements()[target[0]];
-      // const src = element.getAttribute('src') || '';
-      // element.setAttribute('src', '');
-      // setTimeout(() => {
-      //   // if (confirm(`target is ${target}`)) {
-      //   if (true) {
-      //     this.player.openOpenableTiles(target);
-      //     setTimeout(()=>this.start(0), 500);
-      //   } else {
-      //     element.setAttribute('src', src);
-      //   }
-      // }, 500);
+      const target = [this.analyzer.mostOpenableTile()];
+      const element = tileElements()[target[0]];
+      const src = element.getAttribute('src') || '';
+      element.setAttribute('src', '');
+      setTimeout(() => {
+        // if (confirm(`target is ${target}`)) {
+        if (true) {
+          this.player.openOpenableTiles(target);
+          setTimeout(()=>this.start(0), 500);
+        } else {
+          element.setAttribute('src', src);
+        }
+      }, 500);
     }
   }
 }
