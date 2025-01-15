@@ -40,7 +40,8 @@ function getStyles(level: number) {
 
 export default function Page() {
   // game state管理。Gameオブジェクトをreducer関数で更新する。
-  const [game, dispatch] = useReducer(reducer, iniState(EASY));
+  // const [game, dispatch] = useReducer(reducer, iniState(EASY));
+  const [game, dispatch] = useReducer(reducer, iniState(MEDIUM));
   // sprite handler。load後に描写出来るようにstate管理してる
   const [handler, setHandler] = useState<Sprites | null>(null);
   // 経過秒数state
