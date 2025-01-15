@@ -1,4 +1,4 @@
-import { COVERED, FLAG, PLAY } from "../../lib/mskai/constants";
+import { AUTO_PILOT, COVERED, FLAG, NEW_FEATURE, PLAY, PROBABILITY } from "../../lib/mskai/constants";
 import { getStatus, sortedUniqArray, tileElements } from "./common";
 import { Game } from "./game";
 import { Tile } from "./tile";
@@ -7,12 +7,29 @@ import { EdgesType } from "./tile";
 interface gameInfo {
   cols: number;
   rows: number;
+  status: number;
+  handlerType: number;
 }
 
 export const analyzeBtnClicked = (props: gameInfo) => {
-  const {cols, rows} = props;
+  const {cols, rows, handlerType} = props;
   const game = new Game(cols, rows);
-  game.start();
+  switch (handlerType) {
+    case AUTO_PILOT:
+      game.start();
+      break;
+    case NEW_FEATURE:
+      console.log('NEW_FEATURE');
+      game.newFeature();
+      break;
+    case PROBABILITY:
+      console.log('PROBABILITY');
+      game.processUncertainty(0);
+      break;
+    default:
+      game.start();
+      break;
+  }
 };
 
 
@@ -119,11 +136,111 @@ export class Analyzer {
   }
 
   // 次のような配置を見つけたらタイルを開けられる
-  // ___    ___
-  // _11 -> _11
-  // _CC    _CX
+  // ___?    ___?
+  // _11? -> _11?
+  // _CCC    _CCX
   public searchTheoreticalOpenableTiles(tiles: Tile[]): number[] {
-    return [];
+    const covered: number[] = this.coveredTiles();
+    const tilesWithOne: Tile[] = tiles.filter(tile => tile.value === 1);
+    const ret: number[] = [];
+    tilesWithOne.forEach(tile => {
+      const edges: EdgesType = tile.edges(this.cols, this.rows);
+      const idxUp = tile.up(this.cols, this.rows);
+      const idxRight = tile.right(this.cols, this.rows);
+      const idxDown = tile.down(this.cols, this.rows);
+      const idxLeft = tile.left(this.cols, this.rows);
+      const idxRightDown = tile.rightDown(this.cols, this.rows);
+      const idxRightRightDown = tiles[idxRightDown]?.right(this.cols, this.rows);
+      const idxDownRightDown = tiles[idxRightDown]?.down(this.cols, this.rows);
+      const idxLeftDown = tile.leftDown(this.cols, this.rows);
+      const idxLeftLeftDown = tiles[idxLeftDown]?.left(this.cols, this.rows);
+      const idxDownLeftDown = tiles[idxLeftDown]?.down(this.cols, this.rows);
+      const idxRightUp = tile.rightUp(this.cols, this.rows);
+      const idxRightRightUp = tiles[idxRightUp]?.right(this.cols, this.rows);
+      const idxUpRightUp = tiles[idxRightUp]?.up(this.cols, this.rows);
+      const idxLeftUp = tile.leftUp(this.cols, this.rows);
+      const idxUpLeftUp = tiles[idxLeftUp]?.up(this.cols, this.rows);
+      const idxLeftLeftUp = tiles[idxLeftUp]?.left(this.cols, this.rows);
+      if (covered.includes(idxDown)) {
+        if (covered.includes(idxRightDown) && covered.includes(idxRightRightDown)) {
+          if (tiles[idxRight].value === 1) {
+            if (this.isOpenedEdge(edges.left.map((idx: number) => tiles[idx])) &&
+                this.isOpenedEdge(edges.top.map((idx: number) => tiles[idx]))
+            ) {
+              ret.push(idxRightRightDown);
+            }
+          }
+        } else if (covered.includes(idxLeftDown) && covered.includes(idxLeftLeftDown)) {
+          if (tiles[idxLeft].value === 1) {
+            if (this.isOpenedEdge(edges.right.map((idx: number) => tiles[idx])) &&
+                this.isOpenedEdge(edges.top.map((idx: number) => tiles[idx]))
+            ) {
+              ret.push(idxLeftLeftDown);
+            }
+          }
+        }
+      }
+      if (covered.includes(idxUp)) {
+        if (covered.includes(idxRightUp) && covered.includes(idxRightRightUp)) {
+          if (tiles[idxRight].value === 1) {
+            // debugger
+            if (this.isOpenedEdge(edges.left.map((idx: number) => tiles[idx])) &&
+                this.isOpenedEdge(edges.bottom.map((idx: number) => tiles[idx]))
+            ) {
+              ret.push(idxRightRightUp);
+            }
+          }
+        } else if (covered.includes(idxLeftUp) && covered.includes(idxLeftLeftUp)) {
+          if (tiles[idxLeft].value === 1) {
+            if (this.isOpenedEdge(edges.right.map((idx: number) => tiles[idx])) &&
+                this.isOpenedEdge(edges.bottom.map((idx: number) => tiles[idx]))
+            ) {
+              ret.push(idxLeftLeftUp);
+            }
+          }
+        }
+      }
+      if (covered.includes(idxLeft)) {
+        if (covered.includes(idxLeftUp) && covered.includes(idxUpLeftUp)) {
+          if (tiles[idxUp].value === 1) {
+            if (this.isOpenedEdge(edges.right.map((idx: number) => tiles[idx])) &&
+                this.isOpenedEdge(edges.bottom.map((idx: number) => tiles[idx]))
+            ) {
+              ret.push(idxUpLeftUp);
+            }
+          }
+        } else if (covered.includes(idxLeftDown) && covered.includes(idxDownLeftDown)) {
+          if (tiles[idxDown].value === 1) {
+            if (this.isOpenedEdge(edges.right.map((idx: number) => tiles[idx])) &&
+                this.isOpenedEdge(edges.top.map((idx: number) => tiles[idx]))
+            ) {
+              ret.push(idxDownLeftDown);
+            }
+          }
+        }
+      }
+      if (covered.includes(idxRight)) {
+        if (covered.includes(idxRightUp) && covered.includes(idxUpRightUp)) {
+          if (tiles[idxUp].value === 1) {
+            if (this.isOpenedEdge(edges.left.map((idx: number) => tiles[idx])) &&
+                this.isOpenedEdge(edges.bottom.map((idx: number) => tiles[idx]))
+            ) {
+              ret.push(idxUpRightUp);
+            }
+          }
+        } else if (covered.includes(idxRightDown) && covered.includes(idxDownRightDown)) {
+          if (tiles[idxDown].value === 1) {
+            if (this.isOpenedEdge(edges.left.map((idx: number) => tiles[idx])) &&
+                this.isOpenedEdge(edges.top.map((idx: number) => tiles[idx]))
+            ) {
+              ret.push(idxDownRightDown);
+            }
+          }
+        }
+      }
+    });
+    ret.forEach(idx => console.log(tiles[idx].ele));
+    return ret;
   }
 
   public isCoveredEdge(edge: Tile[]): boolean {
@@ -144,7 +261,7 @@ export class Analyzer {
   // 開いていないタイルのIndexを全て返す
   public coveredTiles(): number[] {
     return this.tiles.map((tile, idx) => {
-      if (tile == COVERED) {
+      if (tile === COVERED) {
         return idx;
       }
     }).filter(idx => idx !== undefined);
@@ -157,6 +274,14 @@ export class Analyzer {
       }
     }).filter(idx => idx !== undefined);
   }
+
+  // private isProccessedTiles(): number[] {
+  //   return this.tiles.map((tile, idx) => {
+  //     if (tile < COVERED) {
+  //       return idx;
+  //     }
+  //   }).filter(idx => idx !== undefined);
+  // }
 
   public read() {
     this.status = getStatus();

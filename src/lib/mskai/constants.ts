@@ -38,3 +38,7 @@ export const ACTION = {
     SMILE_DOWN: 4,// ニコニコにマウスダウン
     SMILE_UP: 5,  // ニコニコにマウスアップ
 }
+
+export const AUTO_PILOT = 1;
+export const NEW_FEATURE = 2;
+export const PROBABILITY = 3;
