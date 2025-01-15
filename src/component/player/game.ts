@@ -54,22 +54,24 @@ export class Game {
         this.player.markFlags(mineIndices);
         setTimeout(()=>this.start(count+1), 500);
       } else {
-        // const openableIndices = this.analyzer.searchTheoreticalOpenableTiles(tiles);
-        // if (openableIndices.length > 0) {
-        //   this.player.openOpenableTiles(openableIndices);
-        //   setTimeout(()=>this.start(count+1), 500);
-        // } else {
-        //   // 不確実な場合
-        //   // this.processUncertainty(count);
-        // }
+        const openableIndices = this.analyzer.searchTheoreticalOpenableTiles(tiles);
+        if (openableIndices.length > 0) {
+          this.player.openOpenableTiles(openableIndices);
+          setTimeout(()=>this.start(count+1), 500);
+        } else {
+          // // 不確実な場合
+          // this.processUncertainty(count);
+          // setTimeout(()=>this.start(count+1), 500);
+        }
       }
     }
   }
 
   public newFeature() {
-    const tiles = this.simplifyBoard();
+    const tiles: Tile[] = this.simplifyBoard();
     const openableIndices = this.analyzer.searchTheoreticalOpenableTiles(tiles);
     if (openableIndices.length > 0) {
+      // openableIndices.forEach(idx => tiles[idx].ele.setAttribute('src', ''));
       this.player.openOpenableTiles(openableIndices);
     }
   }
@@ -105,6 +107,7 @@ export class Game {
       const element = tileElements()[target[0]];
       const src = element.getAttribute('src') || '';
       element.setAttribute('src', '');
+      console.log(element);
       setTimeout(() => {
         // if (confirm(`target is ${target}`)) {
         if (true) {

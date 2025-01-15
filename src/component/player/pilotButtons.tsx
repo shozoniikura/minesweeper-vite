@@ -8,13 +8,13 @@ const choiceHandler = (onClick: (x: number)=>void, handlerType: number) => {
 const selectLabel = (handlerType: number): string => {
   switch (handlerType) {
     case AUTO_PILOT:
-      return 'Auto Pilot';
+      return 'AUTO';
     case NEW_FEATURE:
-      return 'FEATURE';
+      return 'FEAT';
     case PROBABILITY:
-      return 'PROBABILITY';
+      return 'PROB';
     default:
-      return 'Auto Pilot';
+      return 'AUTO';
   }
 }
 
