@@ -18,7 +18,8 @@ const TILE_SP = [
   [16, 39, 16, 16], // FLAG
   [32, 39, 16, 16], // REDBOMB
   [48, 39, 16, 16], // NG_BOMB
-  [64, 39, 16, 16]  // BOMB
+  [64, 39, 16, 16], // BOMB
+  [80, 39, 16, 16]  // QUESTION
 ];
 
 // smiley faceのSprite情報:[x,y,width,height]

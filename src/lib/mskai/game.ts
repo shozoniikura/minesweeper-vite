@@ -1,5 +1,5 @@
 // ground値の定数
-import { EMPTY, COVERED, FLAG, BOMB, RED_BOMB, NG_BOMB } from "./constants";
+import { EMPTY, COVERED, FLAG, BOMB, RED_BOMB, NG_BOMB, QUESTION } from "./constants";
 // tile値の定数
 import { NOT_OPEN, FLAGGED, OPEN } from "./constants";
 // smile状態値の定数
@@ -14,7 +14,7 @@ export type TileType = typeof NOT_OPEN | typeof FLAGGED | typeof OPEN;
 
 // groundが取りうる値の一覧を型にする
 export type GroundType = typeof EMPTY | typeof COVERED | typeof FLAG
-    | typeof RED_BOMB | typeof NG_BOMB | typeof BOMB
+    | typeof RED_BOMB | typeof NG_BOMB | typeof BOMB | typeof QUESTION
     | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 // smile状態が取りうる値の一覧を型にする
