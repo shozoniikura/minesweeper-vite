@@ -104,17 +104,10 @@ export class Game {
       // setTimeout(()=>this.start(count+1), 500);
     } else {
       const target = [this.analyzer.mostOpenableTile()];
-      const element = tileElements()[target[0]];
-      const src = element.getAttribute('src') || '';
-      element.setAttribute('src', '');
-      console.log(element);
+      this.player.highlightTile(target[0]);
       setTimeout(() => {
-        // if (confirm(`target is ${target}`)) {
         if (true) {
           this.player.openOpenableTiles(target);
-          // setTimeout(()=>this.start(0), 500);
-        } else {
-          element.setAttribute('src', src);
         }
       }, 500);
     }
