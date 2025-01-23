@@ -365,18 +365,29 @@ export class Analyzer {
     return this.tiles.map((value, idx) => new Tile(idx, value));
   }
 
+  /**
+   * 地雷が存在する可能性のあるタイルを探索する
+   * 開いているタイルの周囲8マスを調べ、以下の条件を満たすタイルを地雷候補とする：
+   * - 周囲に未開封タイルが存在する（countCovered > 0）
+   * - 周囲の旗の数が、タイルの数字より少ない（countFlag < tile.value）
+   * @returns 地雷候補のタイルインデックスを昇順ソートした配列
+   */
   public searchPotentialMines(): number[] {
+    // ゲーム盤面の状態を読み込む
     this.read();
     const potentialMines: number[] = [];
+    // 未開封タイルと開いているタイルのインデックスを取得
     const coveredTiles = this.coveredTiles();
     const isOpenedTiles = this.isOpenedTiles();
 
+    // 開いているタイルそれぞれについて周囲8マスをチェック
     isOpenedTiles.forEach(tileIdx => {
       const tile = new Tile(tileIdx, this.tiles[tileIdx]);
       const aroundTiles = tile.around(this.cols, this.rows);
-      let countCovered = 0;
-      let countFlag = 0;
+      let countCovered = 0;  // 周囲の未開封タイル数
+      let countFlag = 0;     // 周囲の旗の数
 
+      // 周囲8マスの状態をカウント
       aroundTiles.forEach(position => {
         if (this.tiles[position] >= COVERED) {
           countCovered++;
@@ -386,7 +397,9 @@ export class Analyzer {
         }
       });
 
+      // 未開封タイルがあり、かつ旗の数が数字より少ない場合
       if (countCovered > 0 && countFlag < tile.value) {
+        // 周囲の未開封タイルを地雷候補として追加（重複は除外）
         aroundTiles.forEach(idx => {
           if (coveredTiles.includes(idx) && !potentialMines.includes(idx)) {
             potentialMines.push(idx);
@@ -395,6 +408,7 @@ export class Analyzer {
       }
     });
 
+    // 地雷候補のインデックスを昇順にソートして返す
     return potentialMines.sort((first: number, second: number) => first - second);
   }
 }
