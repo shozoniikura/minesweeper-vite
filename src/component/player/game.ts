@@ -104,7 +104,6 @@ export class Game {
     // 既存の開けられるタイルの処理
     const openableIndices = this.analyzer.searchTheoreticalOpenableTiles(tiles);
     if (openableIndices.length > 0) {
-      // openableIndices.forEach(idx => tiles[idx].ele.setAttribute('src', ''));
       this.player.openOpenableTiles(openableIndices);
     }
   }
