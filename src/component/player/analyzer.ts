@@ -364,4 +364,37 @@ export class Analyzer {
     this.read();
     return this.tiles.map((value, idx) => new Tile(idx, value));
   }
+
+  public searchPotentialMines(): number[] {
+    this.read();
+    const potentialMines: number[] = [];
+    const coveredTiles = this.coveredTiles();
+    const isOpenedTiles = this.isOpenedTiles();
+
+    isOpenedTiles.forEach(tileIdx => {
+      const tile = new Tile(tileIdx, this.tiles[tileIdx]);
+      const aroundTiles = tile.around(this.cols, this.rows);
+      let countCovered = 0;
+      let countFlag = 0;
+
+      aroundTiles.forEach(position => {
+        if (this.tiles[position] >= COVERED) {
+          countCovered++;
+        }
+        if (this.tiles[position] === FLAG) {
+          countFlag++;
+        }
+      });
+
+      if (countCovered > 0 && countFlag < tile.value) {
+        aroundTiles.forEach(idx => {
+          if (coveredTiles.includes(idx) && !potentialMines.includes(idx)) {
+            potentialMines.push(idx);
+          }
+        });
+      }
+    });
+
+    return potentialMines.sort((first: number, second: number) => first - second);
+  }
 }
