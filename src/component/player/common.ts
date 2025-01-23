@@ -1,3 +1,6 @@
+import { QUESTION } from "../../lib/mskai/constants";
+import { loadSprite } from "../../lib/mskai/loader";
+
 export const uniqArray = (ary: number[]): number[] => {
   return Array.from(new Set(ary));
 };
@@ -19,3 +22,11 @@ export const getStatus = (): number => {
   return parseInt(st);
 };
 
+export const QuestionMark = async (): Promise<string> => {
+  try {
+    const handler = await loadSprite("minesweeper.png");
+    return handler.layer.getUrl(QUESTION);
+  } catch {
+    return "";
+  }
+}
