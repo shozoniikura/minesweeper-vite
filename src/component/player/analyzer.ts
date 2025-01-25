@@ -409,6 +409,18 @@ export class Analyzer {
     });
 
     // 地雷候補のインデックスを昇順にソートして返す
-    return potentialMines.sort((first: number, second: number) => first - second);
+    const ret = potentialMines.sort((first: number, second: number) => first - second);
+    console.log(ret);
+    return ret;
+  }
+
+  /**
+   * 確実に地雷ではないタイルを探索する
+   * @param tiles 簡略化されたボード状態
+   * @returns 地雷ではないと確定できるタイルのインデックスを昇順ソートした配列
+   */
+  public searchSafeTiles(tiles: Tile[]): number[] {
+    // メソッドの中身を除去
+    return [];
   }
 }

@@ -68,6 +68,17 @@ export class Game {
   }
 
   public newFeature() {
+    const bombs = this.analyzer.searchBombs();
+    this.player.markFlags(bombs);
+    const tiles = this.simplifyBoard();
+    // const tiles = this.analyzer.cloneTiles();
+    const openableTiles = this.analyzer.searchSafeTiles(tiles);
+    if (openableTiles.length > 0) {
+      this.player.openOpenableTiles(openableTiles);
+    }
+  }
+
+  public newFeature2() {
     // 地雷の場所を検索してフラグを立てる
     const bombs = this.analyzer.searchBombs();
     this.player.markFlags(bombs);
