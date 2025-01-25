@@ -6,6 +6,7 @@ export const FLAG = 10;     // 旗のマス（使ってないかも）
 export const RED_BOMB = 11; // クリックした地雷は赤い地雷
 export const NG_BOMB = 12;  // 地雷じゃないのに旗おいたとこ。負けた際に表示。
 export const BOMB = 13;
+export const QUESTION = 14;
 
 // 地雷版の各マスの状態を3つに分類
 export const NOT_OPEN = 0;  // まだ地面が見えていないマス

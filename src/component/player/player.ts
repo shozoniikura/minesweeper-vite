@@ -1,5 +1,5 @@
 import { FLAG, PLAY } from "../../lib/mskai/constants";
-import { getStatus, getValueAt, tileElements } from "./common";
+import { getStatus, getValueAt, QuestionMark, tileElements } from "./common";
 
 // Player は具体的なオペレーションを実行する
 export class Player {
@@ -46,5 +46,18 @@ export class Player {
         console.log(`status is ${status}`);
       this.openOpenableTiles(indices);
     }, this.waitAfterOpen);
+  }
+
+  public async highlightTile(index: number): Promise<void> {
+    const element = tileElements()[index];
+
+    // TILE_SPの14番目（QUESTION）のURLを使用
+    const questionSpriteUrl = await QuestionMark();
+    element.setAttribute('src', questionSpriteUrl);
+
+    // // 元の画像を復元するために、タイマーをセット
+    // setTimeout(() => {
+    //   element.setAttribute('src', src);
+    // }, 500);
   }
 }
