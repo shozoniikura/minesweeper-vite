@@ -239,7 +239,7 @@ export class Analyzer {
         }
       }
     });
-    ret.forEach(idx => console.log(tiles[idx].ele));
+    // ret.forEach(idx => console.log(tiles[idx].ele));
     return ret;
   }
 

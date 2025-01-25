@@ -59,6 +59,16 @@ export class Game {
           this.player.openOpenableTiles(openableIndices);
           setTimeout(()=>this.start(count+1), 500);
         } else {
+          const openableTiles = this.analyzer.searchSafeTiles(tiles);
+          if (openableTiles.length > 0) {
+            openableTiles.forEach(idx => {
+              this.player.highlightTile(idx);
+            });
+            setTimeout(() => {
+              this.player.openOpenableTiles(openableTiles);
+            }, 500);
+            setTimeout(()=>this.start(count+1), 500);
+          }
           // // 不確実な場合
           // this.processUncertainty(count);
           // setTimeout(()=>this.start(count+1), 500);
@@ -74,7 +84,12 @@ export class Game {
     // const tiles = this.analyzer.cloneTiles();
     const openableTiles = this.analyzer.searchSafeTiles(tiles);
     if (openableTiles.length > 0) {
-      this.player.openOpenableTiles(openableTiles);
+      openableTiles.forEach(idx => {
+        this.player.highlightTile(idx);
+      });
+      setTimeout(() => {
+        this.player.openOpenableTiles(openableTiles);
+      }, 500);
     }
   }
 
@@ -96,7 +111,7 @@ export class Game {
     const tiles: Tile[] = this.simplifyBoard();
     // 理論的な地雷の位置を検索
     const mineIndices = this.analyzer.searchTheoreticalMines(tiles);
-    console.log(mineIndices);
+    // console.log(mineIndices);
     this.player.markFlags(mineIndices);
 
     const tiles2: Tile[] = this.simplifyBoard();
