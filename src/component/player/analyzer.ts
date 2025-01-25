@@ -420,7 +420,51 @@ export class Analyzer {
    * @returns 地雷ではないと確定できるタイルのインデックスを昇順ソートした配列
    */
   public searchSafeTiles(tiles: Tile[]): number[] {
-    // メソッドの中身を除去
-    return [];
+    const safeTiles: number[] = [];
+    const openedTiles = tiles.filter(tile => tile.value > 0 && tile.value < COVERED);
+
+    // 数字「1」のタイルを処理
+    openedTiles.forEach(tile => {
+        if (tile.value !== 1) return;
+
+        // このタイルに隣接する未開封タイルを取得
+        const aroundTiles = tile.around(this.cols, this.rows);
+        const coveredTiles = aroundTiles.filter(idx => 
+            tiles[idx].value === COVERED || tiles[idx].value === FLAG
+        );
+
+        // 隣接する未開封タイルが2つある場合、そのいずれかが地雷
+        if (coveredTiles.length === 2) {
+            // この2つの未開封タイルに隣接する他の「1」のタイルを探す
+            coveredTiles.forEach(coveredIdx => {
+                const adjacentTiles = new Tile(coveredIdx, COVERED).around(this.cols, this.rows);
+                adjacentTiles.forEach(adjIdx => {
+                    const adjTile = tiles[adjIdx];
+                    if (adjTile.value === 1 && adjTile.position !== tile.position) {
+                        // 隣接する「1」のタイルの周囲の未開封タイルを取得
+                        const adjAroundTiles = adjTile.around(this.cols, this.rows);
+                        const adjCoveredTiles = adjAroundTiles.filter(idx => 
+                            tiles[idx].value === COVERED || tiles[idx].value === FLAG
+                        );
+
+                        // この「1」のタイルが元の2つの未開封タイルを含んでいる場合
+                        const sharedTiles = coveredTiles.filter(idx => 
+                            adjCoveredTiles.includes(idx)
+                        );
+                        if (sharedTiles.length === 2) {
+                            // それ以外の未開封タイルは安全
+                            adjCoveredTiles.forEach(idx => {
+                                if (!sharedTiles.includes(idx) && !safeTiles.includes(idx)) {
+                                    safeTiles.push(idx);
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+        }
+    });
+
+    return safeTiles.sort((a, b) => a - b);
   }
 }
