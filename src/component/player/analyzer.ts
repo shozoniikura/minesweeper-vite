@@ -17,6 +17,7 @@ export const analyzeBtnClicked = (props: gameInfo) => {
   switch (handlerType) {
     case AUTO_PILOT:
       game.start();
+      // game.start(-2);
       break;
     case NEW_FEATURE:
       console.log('NEW_FEATURE');
@@ -239,7 +240,7 @@ export class Analyzer {
         }
       }
     });
-    ret.forEach(idx => console.log(tiles[idx].ele));
+    // ret.forEach(idx => console.log(tiles[idx].ele));
     return ret;
   }
 
@@ -420,7 +421,102 @@ export class Analyzer {
    * @returns 地雷ではないと確定できるタイルのインデックスを昇順ソートした配列
    */
   public searchSafeTiles(tiles: Tile[]): number[] {
-    // メソッドの中身を除去
-    return [];
+    const safeTiles: number[] = [];
+    const openedTiles = tiles.filter(tile => tile.value > 0 && tile.value < COVERED);
+
+    // 数字「1」のタイルを処理
+    openedTiles.forEach(tile => {
+        if (tile.value !== 1) return;
+
+        // このタイルに隣接する未開封タイルを取得
+        const aroundTiles = tile.around(this.cols, this.rows);
+        const coveredTiles = aroundTiles.filter(idx => 
+            tiles[idx].value === COVERED || tiles[idx].value === FLAG
+        );
+
+        // 隣接する未開封タイルが2つある場合、そのいずれかが地雷
+        if (coveredTiles.length === 2) {
+            // この2つの未開封タイルに隣接する他の「1」のタイルを探す
+            coveredTiles.forEach(coveredIdx => {
+                const adjacentTiles = new Tile(coveredIdx, COVERED).around(this.cols, this.rows);
+                adjacentTiles.forEach(adjIdx => {
+                    const adjTile = tiles[adjIdx];
+                    if (adjTile.value === 1 && adjTile.position !== tile.position) {
+                        // 隣接する「1」のタイルの周囲の未開封タイルを取得
+                        const adjAroundTiles = adjTile.around(this.cols, this.rows);
+                        const adjCoveredTiles = adjAroundTiles.filter(idx => 
+                            tiles[idx].value === COVERED || tiles[idx].value === FLAG
+                        );
+
+                        // この「1」のタイルが元の2つの未開封タイルを含んでいる場合
+                        const sharedTiles = coveredTiles.filter(idx => 
+                            adjCoveredTiles.includes(idx)
+                        );
+                        if (sharedTiles.length === 2) {
+                            // それ以外の未開封タイルは安全
+                            adjCoveredTiles.forEach(idx => {
+                                if (!sharedTiles.includes(idx) && !safeTiles.includes(idx)) {
+                                    safeTiles.push(idx);
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+        }
+    });
+
+    return safeTiles.sort((a, b) => a - b);
+  }
+
+  /**
+   * 確定地雷を検索する
+   * @param tiles 簡略化されたボード状態
+   * @returns 確定地雷のタイルインデックスを昇順ソートした配列
+   */
+  public searchConfirmedMines(tiles: Tile[]): number[] {
+    const confirmedMines: number[] = [];
+    const openedTiles = tiles.filter(tile => tile.value > 0 && tile.value < COVERED);
+
+    // 開いているタイルそれぞれについて処理
+    openedTiles.forEach(centerTile => {
+        const centerAroundTiles = centerTile.around(this.cols, this.rows);
+        const centerCoveredTiles = centerAroundTiles.filter(idx => 
+            tiles[idx].value === COVERED
+        );
+
+        // フラグの数をカウント
+        const flagCount = centerAroundTiles.filter(idx => 
+            tiles[idx].value === FLAG
+        ).length;
+
+        // 数字タイルの周囲の未開封タイルを確認
+        if (centerTile.value > 0) {
+            // フラグの数が数字タイルの値に達している場合
+            if (flagCount === centerTile.value) {
+                // 残りの未開封タイルは全て地雷
+                centerCoveredTiles.forEach(idx => {
+                    if (!confirmedMines.includes(idx)) {
+                        confirmedMines.push(idx);
+                    }
+                });
+            } else {
+                // フラグの数が数字タイルの値より少ない場合
+                const remainingMines = centerTile.value - flagCount;
+                const remainingTiles = centerCoveredTiles.length;
+
+                // 残りの未開封タイル数と残りの地雷数が一致する場合
+                if (remainingMines > 0 && remainingMines === remainingTiles) {
+                    centerCoveredTiles.forEach(idx => {
+                        if (!confirmedMines.includes(idx)) {
+                            confirmedMines.push(idx);
+                        }
+                    });
+                }
+            }
+        }
+    });
+
+    return confirmedMines.sort((a, b) => a - b);
   }
 }

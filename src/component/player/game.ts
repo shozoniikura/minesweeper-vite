@@ -22,6 +22,10 @@ export class Game {
   public start(count: number = 0) {
     this.status = getStatus();
 
+    if (count == -1) {
+      return;
+    }
+
     if (this.status !== PLAY) {
       // WIN/LOSEの場合は再起動
       // setTimeout(() => this.restartGame(count), 5000);
@@ -49,7 +53,7 @@ export class Game {
     } else {
       // 経験上・理論上、地雷があると予想される場所を探す
       const tiles = this.simplifyBoard();
-      const mineIndices = this.analyzer.searchTheoreticalMines(tiles);
+      const mineIndices = this.analyzer.searchTheoreticalMines(tiles).concat(this.analyzer.searchConfirmedMines(tiles));
       if (mineIndices.length > 0) {
         this.player.markFlags(mineIndices);
         setTimeout(()=>this.start(count+1), 500);
@@ -59,6 +63,16 @@ export class Game {
           this.player.openOpenableTiles(openableIndices);
           setTimeout(()=>this.start(count+1), 500);
         } else {
+          const openableTiles = this.analyzer.searchSafeTiles(tiles);
+          if (openableTiles.length > 0) {
+            openableTiles.forEach(idx => {
+              // this.player.highlightTile(idx);
+            });
+            setTimeout(() => {
+              this.player.openOpenableTiles(openableTiles);
+            }, 500);
+            setTimeout(()=>this.start(count+1), 500);
+          }
           // // 不確実な場合
           // this.processUncertainty(count);
           // setTimeout(()=>this.start(count+1), 500);
@@ -68,13 +82,39 @@ export class Game {
   }
 
   public newFeature() {
-    const bombs = this.analyzer.searchBombs();
-    this.player.markFlags(bombs);
+    let flag = true;
+    // flag = !flag;
+
+    if (flag) {
+      // this.start(-2);
+      this.newFeature4();
+    } else {
+      this.newFeature3();
+    }
+  }
+
+  public newFeature4() {
     const tiles = this.simplifyBoard();
-    // const tiles = this.analyzer.cloneTiles();
+    const bombs = this.analyzer.searchConfirmedMines(tiles);
+    console.log("bobms are ", bombs);
+    // this.player.markFlags(bombs);
+    bombs.forEach(idx => {
+      this.player.highlightTile(idx);
+    });
+  }
+
+  public newFeature3() {
+    const tiles = this.simplifyBoard();
     const openableTiles = this.analyzer.searchSafeTiles(tiles);
+    console.log("openableTiles are ", openableTiles);
     if (openableTiles.length > 0) {
-      this.player.openOpenableTiles(openableTiles);
+      openableTiles.forEach(idx => {
+        // this.player.highlightTile(idx);
+        this.player.openOpenableTiles([idx]);
+      });
+      // setTimeout(() => {
+      //   this.player.openOpenableTiles(openableTiles);
+      // }, 500);
     }
   }
 
@@ -96,7 +136,7 @@ export class Game {
     const tiles: Tile[] = this.simplifyBoard();
     // 理論的な地雷の位置を検索
     const mineIndices = this.analyzer.searchTheoreticalMines(tiles);
-    console.log(mineIndices);
+    // console.log(mineIndices);
     this.player.markFlags(mineIndices);
 
     const tiles2: Tile[] = this.simplifyBoard();
