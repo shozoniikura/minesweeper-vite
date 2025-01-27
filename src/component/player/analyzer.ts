@@ -467,4 +467,62 @@ export class Analyzer {
 
     return safeTiles.sort((a, b) => a - b);
   }
+
+  /**
+   * 数字タイルの周囲で地雷が確定するタイルを探索する
+   * @param tiles 簡略化されたボード状態
+   * @returns 地雷確定のタイルインデックスを昇順ソートした配列
+   */
+  public searchConfirmedMines(tiles: Tile[]): number[] {
+    const confirmedMines: number[] = [];
+    const openedTiles = tiles.filter(tile => tile.value > 0 && tile.value < COVERED);
+
+    // 開いているタイルそれぞれについて処理
+    openedTiles.forEach(centerTile => {
+        const centerAroundTiles = centerTile.around(this.cols, this.rows);
+        const centerCoveredTiles = centerAroundTiles.filter(idx => 
+            tiles[idx].value === COVERED
+        );
+
+        // 数字「2」のタイルの処理
+        if (centerTile.value === 2) {
+            const aroundCovered = centerAroundTiles.filter(idx => 
+                tiles[idx].value === COVERED
+            ).length;
+            // 未開封タイルが2つの場合、そのうちの1つは地雷確定
+            if (aroundCovered === 2) {
+                centerCoveredTiles.forEach(coveredIdx => {
+                    // この未開封タイルに隣接する他の数字タイルを探す
+                    const adjacentTiles = new Tile(coveredIdx, COVERED).around(this.cols, this.rows);
+                    adjacentTiles.forEach(adjIdx => {
+                        const adjTile = tiles[adjIdx];
+                        if (adjTile.value === 4) {  // 数字「4」のタイルを処理
+                            const adjAroundTiles = adjTile.around(this.cols, this.rows);
+                            const adjCoveredTiles = adjAroundTiles.filter(idx => 
+                                tiles[idx].value === COVERED
+                            );
+
+                            // 「4」のタイルの周囲の未開封タイルを処理
+                            const remainingMines = 4 - 1;  // 1つは「2」から確定した地雷
+                            const remainingTiles = adjCoveredTiles.filter(idx => 
+                                !centerCoveredTiles.includes(idx)
+                            );
+
+                            // 残りの未開封タイル数と必要な地雷数が一致する場合
+                            if (remainingMines > 0 && remainingMines === remainingTiles.length) {
+                                remainingTiles.forEach(idx => {
+                                    if (!confirmedMines.includes(idx)) {
+                                        confirmedMines.push(idx);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                });
+            }
+        }
+    });
+
+    return confirmedMines.sort((a, b) => a - b);
+  }
 }
