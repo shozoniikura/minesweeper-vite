@@ -9,7 +9,7 @@ export class Player {
 
   constructor() {
     this.waitAfterFlag = 100;
-    this.waitAfterOpen = 100;
+    this.waitAfterOpen = 10;
     this.waitRead = 10;
   }
 
